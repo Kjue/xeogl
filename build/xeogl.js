@@ -4,7 +4,7 @@
  * A WebGL-based 3D visualization engine from xeoLabs
  * http://xeogl.org/
  *
- * Built on 2017-02-28
+ * Built on 2017-04-17
  *
  * MIT License
  * Copyright 2017, Lindsay Kay
@@ -43634,10 +43634,10 @@ xeogl.GLTFLoaderUtils = Object.create(Object, {
  @param [cfg.id] {String} Optional ID, unique among all components in the parent scene, generated automatically when omitted.
  @param [cfg.meta] {String:Object} Optional map of user-defined metadata to attach to this Lookat.
  @param [cfg.parent] {String|Transform} ID or instance of a parent {{#crossLink "Transform"}}{{/crossLink}} within the same {{#crossLink "Scene"}}Scene{{/crossLink}}.
- @param [cfg.eye=[0,0,10]] {Array of Number} Eye position.
- @param [cfg.look=[0,0,0]] {Array of Number} The position of the point-of-interest we're looking at.
- @param [cfg.up=[0,1,0]] {Array of Number} The "up" vector.
- @param [cfg.gimbalLockY=false] {Boolean} Effectively whether Y-axis rotation is about the World-space Y-axis or the View-space Y-axis.
+ @param [cfg.eye=[0,0,10]] {Array of Number} The specified position where we are looking from.
+ @param [cfg.look=[0,0,0]] {Array of Number} The specified position of the point-of-interest we are looking at.
+ @param [cfg.up=[0,1,0]] {Array of Number} The specified up direction of the view.
+ @param [cfg.gimbal=cfg.up] {Array of Number} The vector by which we lock the gimbal rotations with. Specify to be null to be disable, and anything else to be locked against.
  @extends Transform
  @author xeolabs / http://xeolabs.com/
  */
@@ -43665,11 +43665,11 @@ xeogl.GLTFLoaderUtils = Object.create(Object, {
             this._eye = math.vec3([0, 0, 10.0]);
             this._look = math.vec3([0, 0, 0]);
             this._up = math.vec3([0, 1, 0]);
+            this._gimbal = this._up;
 
             this.eye = cfg.eye;
             this.look = cfg.look;
             this.up = cfg.up;
-            this.gimbalLockY = cfg.gimbalLockY;
         },
 
         _update: (function () {
@@ -43695,16 +43695,16 @@ xeogl.GLTFLoaderUtils = Object.create(Object, {
             // Get 'look' -> 'eye' vector
             var eye2 = math.subVec3(this._eye, this._look, tempVec3);
 
-            var mat = math.rotationMat4v(angle * 0.0174532925, this._gimbalLockY ? math.vec3([0, 1, 0]) : this._up);
+            var mat = math.rotationMat4v(angle * 0.0174532925, this._gimbalLocked ? this._gimbal : this._up);
             eye2 = math.transformPoint3(mat, eye2, tempVec3b);
 
             // Set eye position as 'look' plus 'eye' vector
             this.eye = math.addVec3(eye2, this._look, tempVec3c);
 
-            if (this._gimbalLockY) {
+            if (this._gimbalLocked) {
 
                 // Rotate 'up' vector about orthogonal vector
-                this.up = math.transformPoint3(mat, this._up, tempVec3d);
+                this.up = math.transformPoint3(mat, this._gimbal, tempVec3d);
             }
         },
 
@@ -43846,33 +43846,41 @@ xeogl.GLTFLoaderUtils = Object.create(Object, {
         _props: {
 
             /**
-             * Effectively whether Y-axis rotation is about the World-space Y-axis or the View-space Y-axis.
+             * The vector by which we lock the gimbal rotations with. Specify to be null to be disable, and anything else to be locked against.
              *
-             * Fires a {{#crossLink "Lookat/gimbalLockY:event"}}{{/crossLink}} event on change.
+             * Fires a {{#crossLink "Lookat/gimbal:event"}}{{/crossLink}} event on change.
              *
-             * @property gimbalLockY
-             * @default false
-             * @type Boolean
+             * @property gimbal
+             * @default [0, 1, 0]
+             * @type Float32Array
              */
-            gimbalLockY: {
+            gimbal: {
 
                 set: function (value) {
 
-                    value = value !== false;
+                    if (!value) {
+                        this._gimbalLocked = false;
+                    }
+                    else {
+                        this._gimbal.set(value);
+                        this._gimbalLocked = true;
+                    }
 
-                    this._gimbalLockY = value;
+                    this._needUpdate(0); // Ensure matrix built on next "tick"
 
                     /**
-                     * Fired whenever this Lookat's  {{#crossLink "Lookat/gimbalLockY:property"}}{{/crossLink}} property changes.
+                     * Fired whenever this Lookat's  {{#crossLink "Lookat/gimbal:property"}}{{/crossLink}} property changes.
                      *
-                     * @event gimbalLockY
+                     * @event gimbal
                      * @param value The property's new value
                      */
-                    this.fire("gimbalLockY", this._gimbalLockY);
+                    this.fire("gimbal", this._gimbal);
                 },
 
                 get: function () {
-                    return this._gimbalLockY;
+                    return this._gimbalLocked
+                        ? this._gimbal
+                        : null;
                 }
             },
 
@@ -43973,7 +43981,7 @@ xeogl.GLTFLoaderUtils = Object.create(Object, {
                 eye: this._eye.slice(),
                 look: this._look.slice(),
                 up: this._up.slice(),
-                gimbalLockY: this._gimbalLockY
+                gimbal: this._gimbal
             };
             if (this._parent) {
                 json.parent = this._parent.id;

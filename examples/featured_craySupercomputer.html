@@ -919,7 +919,7 @@
 
     var scene = xeogl.scene;
     var camera = scene.camera;
-    camera.view.gimbalLockY = true;
+    camera.view.gimbal = camera.view.up;
     camera.view.rotateEyeY(165);
     // camera.view.rotateEyeX(35);
 
