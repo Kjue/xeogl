@@ -37,6 +37,12 @@
         }
     ]);
 
+    setTimeout(function () {
+        // Modify the up direction of the view along with gimbal locking.
+        xeogl.scene.camera.view.up = [1, 0, 0];
+        xeogl.scene.camera.view.gimbal = [1, 0, 0];
+    }, 1000);
+
 </script>
 </body>
 </html>

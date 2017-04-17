@@ -43637,7 +43637,7 @@ xeogl.GLTFLoaderUtils = Object.create(Object, {
  @param [cfg.eye=[0,0,10]] {Array of Number} The specified position where we are looking from.
  @param [cfg.look=[0,0,0]] {Array of Number} The specified position of the point-of-interest we are looking at.
  @param [cfg.up=[0,1,0]] {Array of Number} The specified up direction of the view.
- @param [cfg.gimbal=cfg.up] {Array of Number} The vector by which we lock the gimbal rotations with. Specify to be null to be disable, and anything else to be locked against.
+ @param [cfg.gimbal=[0,1,0]] {Array of Number} The vector by which we lock the gimbal rotations with. Specify to be null to be disable, and same vector as up if you want to lock. Keep same, otherwise behavior is unpredictable.
  @extends Transform
  @author xeolabs / http://xeolabs.com/
  */
@@ -43665,11 +43665,12 @@ xeogl.GLTFLoaderUtils = Object.create(Object, {
             this._eye = math.vec3([0, 0, 10.0]);
             this._look = math.vec3([0, 0, 0]);
             this._up = math.vec3([0, 1, 0]);
-            this._gimbal = this._up;
+            this._gimbal = math.vec3([0, 1, 0]);
 
             this.eye = cfg.eye;
             this.look = cfg.look;
             this.up = cfg.up;
+            this.gimbal = math.vec3([0, 1, 0]);  // Set gimbal lock on by default.
         },
 
         _update: (function () {
@@ -43686,7 +43687,7 @@ xeogl.GLTFLoaderUtils = Object.create(Object, {
 
 
         /**
-         * Rotate 'eye' about 'look', around the 'up' vector
+         * Rotate 'eye' about 'look', around the 'up' vector. This is the yaw.
          *
          * @param {Number} angle Angle of rotation in degrees
          */
@@ -43701,15 +43702,16 @@ xeogl.GLTFLoaderUtils = Object.create(Object, {
             // Set eye position as 'look' plus 'eye' vector
             this.eye = math.addVec3(eye2, this._look, tempVec3c);
 
+            // Do we lock roll rotation or not.
             if (this._gimbalLocked) {
 
                 // Rotate 'up' vector about orthogonal vector
-                this.up = math.transformPoint3(mat, this._gimbal, tempVec3d);
+                this.up = math.transformPoint3(mat, this._up, tempVec3d);
             }
         },
 
         /**
-         * Rotate 'eye' about 'look' around the X-axis
+         * Rotate 'eye' about 'look' around the X-axis. This is pitch.
          *
          * @param {Number} angle Angle of rotation in degrees
          */

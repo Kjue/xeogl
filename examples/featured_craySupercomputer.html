@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-    <script src="../build/xeogl.min.js"></script>
+    <script src="../build/xeogl.js"></script>
 
     <!--<script src="js/geometry/vectorTextGeometry.js"></script>-->
     <script src="js/geometry/heightmapGeometry.js"></script>
@@ -919,7 +919,7 @@
 
     var scene = xeogl.scene;
     var camera = scene.camera;
-    camera.view.gimbal = camera.view.up;
+    // camera.view.gimbal = [0, 1, 0];
     camera.view.rotateEyeY(165);
     // camera.view.rotateEyeX(35);
 
