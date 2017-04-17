@@ -80,11 +80,12 @@
             this._look = math.vec3([0, 0, 0]);
             this._up = math.vec3([0, 1, 0]);
             this._gimbal = math.vec3([0, 1, 0]);
+            this._gimbalLocked = true;
 
             this.eye = cfg.eye;
             this.look = cfg.look;
             this.up = cfg.up;
-            this.gimbal = math.vec3([0, 1, 0]);  // Set gimbal lock on by default.
+            this.gimbal = cfg.gimbal;
         },
 
         _update: (function () {
@@ -274,10 +275,10 @@
 
                 set: function (value) {
 
-                    if (!value) {
+                    if (value === null) {
                         this._gimbalLocked = false;
                     }
-                    else {
+                    else if (value != undefined) {
                         this._gimbal.set(value);
                         this._gimbalLocked = true;
                     }
